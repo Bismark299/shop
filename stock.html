@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Water Stock Management — Pro</title>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+      :root {
+        --primary: #1565c0;
+        --accent: #1e88e5;
+        --muted: #6b7c93;
+        --bg: #f4f7fb;
+        --card: #ffffff;
+        --success: #2ecc71;
+        --danger: #e74c3c;
+        --glass: rgba(255, 255, 255, 0.8);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+        background: var(--bg);
+        color: #213547;
+        -webkit-font-smoothing: antialiased;
+      }
+      header {
+        background: linear-gradient(90deg, var(--primary), var(--accent));
+        color: #fff;
+        padding: 18px 20px;
+        text-align: center;
+        box-shadow: 0 6px 20px rgba(10, 25, 47, 0.08);
+      }
+      header h1 {
+        margin: 0;
+        font-size: 1.25rem;
+      }
+      .wrap {
+        max-width: 1200px;
+        margin: 18px auto;
+        padding: 0 16px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 14px;
+      }
+      /* each function as a row card */
+      .row-card {
+        background: var(--card);
+        border-radius: 12px;
+        padding: 14px;
+        box-shadow: 0 6px 18px rgba(10, 25, 47, 0.04);
+      }
+      .row-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+      .row-title h2 {
+        margin: 0;
+        font-size: 1.05rem;
+        color: var(--primary);
+      }
+      .row-body {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 12px;
+      }
+      label {
+        display: block;
+        font-size: 0.9rem;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
+      input[type="number"],
+      input[type="text"],
+      input[type="date"],
+      select {
+        width: 100%;
+        padding: 8px;
+        border-radius: 8px;
+        border: 1px solid #e6eef8;
+        background: #fbfdff;
+      }
+      button {
+        padding: 9px 12px;
+        border-radius: 8px;
+        border: none;
+        background: var(--accent);
+        color: #fff;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      button.secondary {
+        background: #eef6ff;
+        color: var(--primary);
+      }
+      .summary-row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .summary {
+        flex: 1;
+        min-width: 180px;
+        background: linear-gradient(180deg, #fff, #fcfeff);
+        padding: 12px;
+        border-radius: 10px;
+        border: 1px solid #f0f6fb;
+        text-align: left;
+      }
+      .summary h3 {
+        margin: 0;
+        font-size: 1rem;
+        color: #111;
+      }
+      .summary p {
+        margin: 6px 0 0;
+        font-weight: 700;
+        color: var(--primary);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+      }
+      th,
+      td {
+        padding: 8px;
+        border-bottom: 1px solid #eff4fb;
+        text-align: left;
+        font-size: 0.95rem;
+      }
+      th {
+        background: #fbfdff;
+        color: var(--muted);
+        font-weight: 700;
+      }
+      .small {
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+      .danger {
+        color: var(--danger);
+        font-weight: 700;
+      }
+      .success {
+        color: var(--success);
+        font-weight: 700;
+      }
+      .flex {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .right {
+        text-align: right;
+      }
+      .alert {
+        background: #fff3f2;
+        border-left: 4px solid var(--danger);
+        padding: 8px;
+        border-radius: 6px;
+        color: var(--danger);
+        font-weight: 700;
+      }
+      footer {
+        padding: 12px;
+        text-align: center;
+        color: var(--muted);
+        font-size: 0.9rem;
+        margin-top: 18px;
+      }
+      @media (max-width: 800px) {
+        .row-body {
+          grid-template-columns: 1fr;
+        }
+        .summary-row {
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>💧 Water Stock Management — Pro</h1>
+      <div class="small" style="opacity: 0.9; margin-top: 6px">
+        All values in Ghana Cedi (₵). Data saved locally; export/back up when
+        needed.
+      </div>
+    </header>
+
+    <main class="wrap">
+      <div id="lowStockAlert" style="display: none; margin: 12px 0"></div>
+
+      <div class="grid">
+        <!-- DASHBOARD ROW -->
+        <section class="row-card" id="row-dashboard">
+          <div class="row-title">
+            <h2>Dashboard</h2>
+            <div class="small">Quick snapshot | updated live</div>
+          </div>
+
+          <div class="row-body">
+            <div class="summary-row">
+              <div class="summary">
+                <h3 id="dashStockReadable">0 Bags 0 Sachets</h3>
+                <p class="small">Stock left (bags and leftover sachets)</p>
+              </div>
+              <div class="summary">
+                <h3 id="dashSupplierInfo">
+                  Supplier Bags: 0 (Total cost: ₵0.00)
+                </h3>
+                <p class="small">Fixed supplier amount for settlement</p>
+              </div>
+              <div class="summary">
+                <h3 id="dashStockCost">₵0.00</h3>
+                <p class="small">
+                  Total cost invested (sum of supplier batches)
+                </p>
+              </div>
+              <div class="summary">
+                <h3 id="dashPotentialRevenue">₵0.00</h3>
+                <p class="small">Potential revenue at current selling prices</p>
+              </div>
+              <div class="summary">
+                <h3 id="dashProfitTotal">₵0.00</h3>
+                <p class="small">
+                  Total profit (Revenue − Supplier cost − Damages)
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- STOCK ROW -->
+        <section class="row-card" id="row-stock">
+          <div class="row-title">
+            <h2>Stock — Add / History</h2>
+            <div class="small">Supplier vs Bonus (free) bags</div>
+          </div>
+          <div class="row-body">
+            <div>
+              <label>Supplier Bags (quantity)</label>
+              <input id="inputSupplierBags" type="number" min="0" value="0" />
+              <label>Cost price per bag (₵)</label>
+              <input
+                id="inputSupplierCost"
+                type="number"
+                min="0"
+                step="0.01"
+                value="5.00"
+              />
+              <label>Free / Bonus Bags (quantity)</label>
+              <input id="inputFreeBags" type="number" min="0" value="0" />
+              <div style="margin-top: 8px" class="flex">
+                <button onclick="uiAddStock()">Add Stock</button>
+                <button class="secondary" onclick="exportStock()">
+                  Export Stock CSV
+                </button>
+              </div>
+              <p class="small" style="margin-top: 8px">
+                When you add supplier bags, the supplier fixed cost is increased
+                by (bags × cost per bag). Free bags are cost 0.
+              </p>
+            </div>
+
+            <div>
+              <h3>Stock History</h3>
+              <table id="stockHistoryTable">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Supplier Bags</th>
+                    <th>Cost/Bag</th>
+                    <th>Free Bags</th>
+                    <th>Total Cost</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td colspan="5" class="small">No entries yet</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- SALES ROW -->
+        <section class="row-card" id="row-sales">
+          <div class="row-title">
+            <h2>Sales — Record</h2>
+            <div class="small">Sell by bag or sachet</div>
+          </div>
+          <div class="row-body">
+            <div>
+              <label>Sale type</label>
+              <select id="saleKind">
+                <option value="sachet">Sachet (individual)</option>
+                <option value="bag">Bag (whole)</option>
+              </select>
+
+              <label>Qty</label>
+              <input id="saleQty" type="number" min="1" value="1" />
+
+              <label>Selling price per bag (₵)</label>
+              <input
+                id="uiSellBag"
+                type="number"
+                step="0.01"
+                min="0"
+                value="12.00"
+              />
+
+              <label>Selling price per sachet (₵)</label>
+              <input
+                id="uiSellSachet"
+                type="number"
+                step="0.01"
+                min="0"
+                value="0.50"
+              />
+
+              <label>Sale type</label>
+              <select id="salePaymentType">
+                <option value="cash">Cash</option>
+                <option value="credit">Credit</option>
+              </select>
+
+              <label id="creditNameLabel" style="display: none"
+                >Customer name</label
+              >
+              <input
+                id="creditName"
+                type="text"
+                style="display: none"
+                placeholder="Customer name (for credit)"
+              />
+
+              <div class="flex" style="margin-top: 8px">
+                <button onclick="uiRecordSale()">Record Sale</button>
+                <button class="secondary" onclick="exportSales()">
+                  Export Sales CSV
+                </button>
+              </div>
+
+              <p class="small" style="margin-top: 8px">
+                Sachet sales always use sachet price; bag sales use bag price.
+                Profit calculation uses supplier cost per bag.
+              </p>
+            </div>
+
+            <div>
+              <h3>Recent Sales</h3>
+              <table id="salesHistoryTable">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Qty</th>
+                    <th>Revenue</th>
+                    <th>CostApplied</th>
+                    <th>Profit</th>
+                    <th>Payment</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td colspan="7" class="small">No sales yet</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- DAMAGE ROW -->
+        <section class="row-card" id="row-damage">
+          <div class="row-title">
+            <h2>Damaged Goods</h2>
+            <div class="small">Record damaged sachets or bags</div>
+          </div>
+          <div class="row-body">
+            <div>
+              <label>Damage qty</label>
+              <input id="damageQty" type="number" min="1" value="1" />
+              <label>Damage unit</label>
+              <select id="damageUnit">
+                <option value="sachet">Sachet</option>
+                <option value="bag">Bag</option>
+              </select>
+              <div style="margin-top: 8px" class="flex">
+                <button onclick="uiRecordDamage()">Record Damage</button>
+                <button class="secondary" onclick="exportDamages()">
+                  Export Damage CSV
+                </button>
+              </div>
+              <p class="small" style="margin-top: 8px">
+                Damage value is computed with supplier cost per bag
+                (fractionally for sachets).
+              </p>
+            </div>
+
+            <div>
+              <h3>Damage History</h3>
+              <table id="damageHistoryTable">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Bags</th>
+                    <th>Sachets</th>
+                    <th>Loss</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td colspan="4" class="small">No damage records</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- DEBTORS ROW -->
+        <section class="row-card" id="row-debtors">
+          <div class="row-title">
+            <h2>Debtors</h2>
+            <div class="small">Track credit sales & payments</div>
+          </div>
+          <div class="row-body">
+            <div>
+              <label>Customer name</label>
+              <input id="debtorName" type="text" />
+              <label>Amount (₵)</label>
+              <input id="debtorAmount" type="number" step="0.01" />
+              <div style="margin-top: 8px" class="flex">
+                <button onclick="uiAddDebtor()">Add Debtor</button>
+                <button class="secondary" onclick="exportDebtors()">
+                  Export Debtors CSV
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <h3>Debtors List</h3>
+              <table id="debtorsTable">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Name</th>
+                    <th>Amount</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td colspan="4" class="small">No debtors</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- REPORTS ROW -->
+        <section class="row-card" id="row-reports">
+          <div class="row-title">
+            <h2>Reports & Filters</h2>
+            <div class="small">Filter data and view charts</div>
+          </div>
+          <div class="row-body">
+            <div>
+              <label>From</label>
+              <input id="reportFrom" type="date" />
+              <label>To</label>
+              <input id="reportTo" type="date" />
+              <div style="margin-top: 8px" class="flex">
+                <button onclick="applyReportFilter()">Apply Filter</button>
+                <button class="secondary" onclick="clearReportFilter()">
+                  Clear
+                </button>
+              </div>
+
+              <div style="margin-top: 10px" class="small">
+                Export & charts below reflect applied date range.
+              </div>
+              <div style="margin-top: 8px" class="flex">
+                <button onclick="exportFilteredSales()">
+                  Export Filtered Sales CSV
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <h3>Sales & Profit Chart</h3>
+              <canvas id="salesChart" height="180"></canvas>
+              <p class="small" id="chartNote">
+                Shows revenue & profit per day in the selected range.
+              </p>
+            </div>
+          </div>
+
+          <div style="margin-top: 12px">
+            <h3>Filtered Sales Table</h3>
+            <table id="reportTable">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Qty</th>
+                  <th>Revenue</th>
+                  <th>Cost</th>
+                  <th>Profit</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="6" class="small">No data</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- SETTINGS ROW -->
+        <section class="row-card" id="row-settings">
+          <div class="row-title">
+            <h2>Settings</h2>
+            <div class="small">Thresholds & format</div>
+          </div>
+          <div class="row-body">
+            <div>
+              <label>Default cost price per bag (₵)</label>
+              <input
+                id="setCostBag"
+                type="number"
+                step="0.01"
+                min="0"
+                value="5.00"
+              />
+              <label>Default selling price per bag (₵)</label>
+              <input
+                id="setSellBag"
+                type="number"
+                step="0.01"
+                min="0"
+                value="12.00"
+              />
+              <label>Default selling price per sachet (₵)</label>
+              <input
+                id="setSellSachet"
+                type="number"
+                step="0.01"
+                min="0"
+                value="0.50"
+              />
+            </div>
+
+            <div>
+              <label>Low-stock threshold (bags)</label>
+              <input id="lowStockThreshold" type="number" min="1" value="5" />
+              <div style="margin-top: 8px" class="flex">
+                <button onclick="saveSettings()">Save Settings</button>
+                <button class="secondary" onclick="resetData()">
+                  Reset All Data
+                </button>
+              </div>
+              <p class="small">
+                Settings persist locally. Reset clears localStorage.
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <footer>
+        © 2025 Water Stock Management — Frontend only. Ready for backend
+        integration.
+      </footer>
+    </main>
+
+    <script>
+      /* ============================
+   Utilities & Persistence
+   ============================ */
+      const LC_KEYS = {
+        STOCK: "ws_stock_v3",
+        PRICES: "ws_prices_v3",
+        SALES: "ws_sales_v3",
+        DEBTS: "ws_debts_v3",
+        DAM: "ws_dam_v3",
+        SETTINGS: "ws_set_v3",
+      };
+
+      const formatter = new Intl.NumberFormat("en-GH", {
+        style: "currency",
+        currency: "GHS",
+      });
+      const sachetsPerBag = 30;
+
+      function money(v) {
+        return formatter.format(Number(v || 0));
+      }
+
+      function saveAll() {
+        localStorage.setItem(LC_KEYS.STOCK, JSON.stringify(state.stock));
+        localStorage.setItem(LC_KEYS.PRICES, JSON.stringify(state.prices));
+        localStorage.setItem(LC_KEYS.SALES, JSON.stringify(state.sales));
+        localStorage.setItem(LC_KEYS.DEBTS, JSON.stringify(state.debtors));
+        localStorage.setItem(LC_KEYS.DAM, JSON.stringify(state.damages));
+        localStorage.setItem(LC_KEYS.SETTINGS, JSON.stringify(state.settings));
+      }
+
+      function loadAll() {
+        try {
+          const s = JSON.parse(localStorage.getItem(LC_KEYS.STOCK));
+          const p = JSON.parse(localStorage.getItem(LC_KEYS.PRICES));
+          const sa = JSON.parse(localStorage.getItem(LC_KEYS.SALES));
+          const d = JSON.parse(localStorage.getItem(LC_KEYS.DEBTS));
+          const dam = JSON.parse(localStorage.getItem(LC_KEYS.DAM));
+          const set = JSON.parse(localStorage.getItem(LC_KEYS.SETTINGS));
+          if (s) state.stock = s;
+          if (p) state.prices = p;
+          if (sa) state.sales = sa;
+          if (d) state.debtors = d;
+          if (dam) state.damages = dam;
+          if (set) state.settings = set;
+        } catch (e) {
+          console.warn("loadAll error", e);
+        }
+      }
+
+      /* ============================
+   Application State
+   ============================ */
+      const state = {
+        stock: {
+          totalSachets: 0, // current available sachets (supplier + free)
+          supplierBagsTotal: 0, // total supplier bags ever added (for settlement)
+          history: [], // {date, supplierBags, costPerBag, freeBags, totalCost}
+        },
+        prices: { costPerBag: 5.0, sellBag: 12.0, sellSachet: 0.5 },
+        sales: [], // {date, bagsSold, sachetsSold, revenue, costApplied, profit, paymentType, customer}
+        debtors: [], // {date, name, amount}
+        damages: [], // {date, bagsDamaged, sachetsDamaged, loss}
+        settings: { lowStockThreshold: 5 },
+      };
+
+      /* ============================
+   Init
+   ============================ */
+      loadAll();
+      syncUI();
+
+      /* ============================
+   UI Helpers
+   ============================ */
+
+      function syncUI() {
+        // prices fields
+        document.getElementById("uiSellBag").value = state.prices.sellBag;
+        document.getElementById("uiSellSachet").value = state.prices.sellSachet;
+        document.getElementById("inputSupplierCost").value =
+          state.prices.costPerBag || state.prices.costPerBag === 0
+            ? state.prices.costPerBag
+            : state.prices.costPerBag;
+
+        // settings
+        document.getElementById("setCostBag").value = state.prices.costPerBag;
+        document.getElementById("setSellBag").value = state.prices.sellBag;
+        document.getElementById("setSellSachet").value =
+          state.prices.sellSachet;
+        document.getElementById("lowStockThreshold").value =
+          state.settings.lowStockThreshold;
+
+        renderStockHistory();
+        renderSalesHistory();
+        renderDamageHistory();
+        renderDebtors();
+        updateDashboard();
+        drawChart(); // initial chart
+        checkLowStockAlert();
+      }
+
+      /* ----------------------------
+   Dashboard calculations & render
+   ---------------------------- */
+      function updateDashboard() {
+        const totalSachets = state.stock.totalSachets;
+        const bagsLeft = Math.floor(totalSachets / sachetsPerBag);
+        const sachetsLeft = totalSachets % sachetsPerBag;
+        document.getElementById(
+          "dashStockReadable"
+        ).innerText = `${bagsLeft} Bags ${sachetsLeft} Sachets`;
+
+        const supplierBagsEver = state.stock.supplierBagsTotal;
+        const supplierSettlementAmount =
+          supplierBagsEver * state.prices.costPerBag;
+        document.getElementById(
+          "dashSupplierInfo"
+        ).innerText = `Supplier Bags: ${supplierBagsEver} (Total cost: ${money(
+          supplierSettlementAmount
+        )})`;
+
+        const totalStockCost = state.stock.history.reduce(
+          (s, h) => s + (h.totalCost || 0),
+          0
+        );
+        document.getElementById("dashStockCost").innerText =
+          money(totalStockCost);
+
+        // Potential revenue = (bagsLeft * sellBag) + (sachetsLeft * sellSachet)
+        const potentialRevenue =
+          bagsLeft * state.prices.sellBag +
+          sachetsLeft * state.prices.sellSachet;
+        document.getElementById("dashPotentialRevenue").innerText =
+          money(potentialRevenue);
+
+        // total revenue & profit so far
+        const totalRevenue = state.sales.reduce(
+          (s, x) => s + (x.revenue || 0),
+          0
+        );
+        const totalCostApplied = state.sales.reduce(
+          (s, x) => s + (x.costApplied || 0),
+          0
+        );
+        const totalDamageLoss = state.damages.reduce(
+          (s, x) => s + (x.loss || 0),
+          0
+        );
+        const totalProfit = totalRevenue - totalCostApplied - totalDamageLoss;
+        document.getElementById("dashProfitTotal").innerText =
+          money(totalProfit);
+
+        // set stock value display as total stock cost
+        document.getElementById("dashStockCost").innerText =
+          money(totalStockCost);
+      }
+
+      /* ----------------------------
+   Low-stock alert
+   ---------------------------- */
+      function checkLowStockAlert() {
+        const totalSachets = state.stock.totalSachets;
+        const bagsLeft = Math.floor(totalSachets / sachetsPerBag);
+        const threshold = state.settings.lowStockThreshold || 5;
+        const alertEl = document.getElementById("lowStockAlert");
+        if (bagsLeft <= threshold) {
+          alertEl.style.display = "block";
+          alertEl.innerHTML = `<div class="alert">⚠ Low stock: only ${bagsLeft} bag(s) left. Consider reordering.</div>`;
+        } else {
+          alertEl.style.display = "none";
+          alertEl.innerHTML = "";
+        }
+      }
+
+      /* ============================
+   Stock functions (row)
+   ============================ */
+
+      /**
+       * uiAddStock()
+       * - add supplier & free bags
+       * - supplier bags increase supplierBagsTotal (for fixed settlement)
+       * - store an entry in stock.history
+       */
+      function uiAddStock() {
+        const supplierBags = Math.max(
+          0,
+          parseInt(document.getElementById("inputSupplierBags").value || 0)
+        );
+        const freeBags = Math.max(
+          0,
+          parseInt(document.getElementById("inputFreeBags").value || 0)
+        );
+        const costPerBag = parseFloat(
+          document.getElementById("inputSupplierCost").value ||
+            state.prices.costPerBag ||
+            0
+        );
+
+        if (supplierBags === 0 && freeBags === 0) {
+          return alert("Enter supplier bags and/or free bags to add.");
+        }
+        if (supplierBags > 0 && (!costPerBag || costPerBag <= 0)) {
+          return alert("Enter a valid cost per bag for supplier bags.");
+        }
+
+        const totalCost = supplierBags * costPerBag;
+
+        // update state
+        state.stock.totalSachets += (supplierBags + freeBags) * sachetsPerBag;
+        state.stock.supplierBagsTotal += supplierBags;
+        state.stock.history.push({
+          date: new Date().toISOString(),
+          supplierBags,
+          costPerBag,
+          freeBags,
+          totalCost,
+        });
+
+        // update prices.current costPerBag to latest if supplier provided one
+        if (supplierBags > 0) state.prices.costPerBag = costPerBag;
+
+        saveAll();
+        syncUI();
+        // reset inputs
+        document.getElementById("inputSupplierBags").value = 0;
+        document.getElementById("inputFreeBags").value = 0;
+        document.getElementById("inputSupplierCost").value =
+          state.prices.costPerBag;
+      }
+
+      /* render stock history */
+      function renderStockHistory() {
+        const tbody = document.querySelector("#stockHistoryTable tbody");
+        tbody.innerHTML = "";
+        if (!state.stock.history || state.stock.history.length === 0) {
+          tbody.innerHTML =
+            '<tr><td colspan="5" class="small">No entries yet</td></tr>';
+          return;
+        }
+        state.stock.history
+          .slice()
+          .reverse()
+          .forEach((h) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td>${new Date(h.date).toLocaleString()}</td>
+      <td>${h.supplierBags}</td>
+      <td>${money(h.costPerBag)}</td>
+      <td>${h.freeBags}</td>
+      <td>${money(h.totalCost)}</td>`;
+            tbody.appendChild(tr);
+          });
+      }
+
+      /* export stock history CSV */
+      function exportStock() {
+        const rows = [
+          ["date", "supplier_bags", "cost_per_bag", "free_bags", "total_cost"],
+        ];
+        state.stock.history.forEach((h) => {
+          rows.push([
+            new Date(h.date).toLocaleString(),
+            h.supplierBags,
+            h.costPerBag,
+            h.freeBags,
+            h.totalCost,
+          ]);
+        });
+        downloadCSV(rows, `stock_history_${todayISO()}.csv`);
+      }
+
+      /* ============================
+   Sales functions (row)
+   ============================ */
+
+      /**
+       * uiRecordSale()
+       * - reads sale Kind (bag or sachet), qty, selling prices
+       * - calculates revenue
+       * - costApplied computed from supplier cost per bag * numberOfBagsUsedFraction
+       *   but supplier settlement is fixed to total supplier bags ever added for end-of-period settlement.
+       * - when selling sachets, system consumes from totalSachets
+       * - when selling bag(s), first reduce supplierBagsTotal? (we treat supplier settlement fixed separate)
+       * - store sale entry in state.sales
+       */
+      function uiRecordSale() {
+        const kind = document.getElementById("saleKind").value; // 'bag' or 'sachet'
+        const qty = Math.max(
+          0,
+          parseInt(document.getElementById("saleQty").value || 0)
+        );
+        const sellBag = parseFloat(
+          document.getElementById("uiSellBag").value || state.prices.sellBag
+        );
+        const sellSachet = parseFloat(
+          document.getElementById("uiSellSachet").value ||
+            state.prices.sellSachet
+        );
+        const paymentType = document.getElementById("salePaymentType").value;
+        const customer = (
+          document.getElementById("creditName").value || ""
+        ).trim();
+
+        if (qty <= 0) return alert("Enter a quantity to sell.");
+        if (paymentType === "credit" && !customer)
+          return alert("Provide customer name for credit sale.");
+
+        let totalSachetsNeeded = kind === "bag" ? qty * sachetsPerBag : qty;
+        if (totalSachetsNeeded > state.stock.totalSachets) {
+          return alert("Not enough stock for this sale.");
+        }
+
+        // revenue
+        const revenue = kind === "bag" ? qty * sellBag : qty * sellSachet;
+
+        // costApplied = costPerBag * (totalSachetsNeeded / 30)
+        const costPerBag = state.prices.costPerBag || 0;
+        const costApplied = (totalSachetsNeeded / sachetsPerBag) * costPerBag;
+
+        // profit
+        const profit = revenue - costApplied;
+
+        // deduct stock
+        state.stock.totalSachets -= totalSachetsNeeded;
+        // NOTE: supplierBagsTotal remains as "supplier owed" total metric — do not decrement it here (supplier settlement is the fixed total cost for supplier batches).
+        // If you want to track supplier bags remaining vs sold, you can also maintain a supplierRemaining counter. For current logic we keep settlement as fixed total cost of supplier batches.
+
+        // record sale
+        const sale = {
+          date: new Date().toISOString(),
+          kind,
+          qty,
+          revenue: Number(revenue),
+          costApplied: Number(costApplied),
+          profit: Number(profit),
+          paymentType,
+          customer: paymentType === "credit" ? customer : null,
+        };
+        state.sales.push(sale);
+        if (paymentType === "credit") {
+          // add to debtors ledger
+          state.debtors.push({
+            date: sale.date,
+            name: customer,
+            amount: Number(revenue),
+          });
+        }
+
+        saveAll();
+        syncUI();
+        // reset inputs
+        document.getElementById("saleQty").value = 1;
+        alert("Sale recorded.");
+      }
+
+      /* render recent sales */
+      function renderSalesHistory() {
+        const tbody = document.querySelector("#salesHistoryTable tbody");
+        tbody.innerHTML = "";
+        if (!state.sales || state.sales.length === 0) {
+          tbody.innerHTML =
+            '<tr><td colspan="7" class="small">No sales yet</td></tr>';
+          return;
+        }
+        state.sales
+          .slice()
+          .reverse()
+          .forEach((s) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td>${new Date(s.date).toLocaleString()}</td>
+      <td>${s.kind}</td>
+      <td>${s.qty}</td>
+      <td>${money(s.revenue)}</td>
+      <td>${money(s.costApplied)}</td>
+      <td>${money(s.profit)}</td>
+      <td>${s.paymentType}${s.customer ? " / " + s.customer : ""}</td>`;
+            tbody.appendChild(tr);
+          });
+      }
+
+      /* Export Sales CSV (all) */
+      function exportSales() {
+        const rows = [
+          [
+            "date",
+            "type",
+            "qty",
+            "revenue",
+            "costApplied",
+            "profit",
+            "paymentType",
+            "customer",
+          ],
+        ];
+        state.sales.forEach((s) => {
+          rows.push([
+            new Date(s.date).toLocaleString(),
+            s.kind,
+            s.qty,
+            s.revenue.toFixed(2),
+            s.costApplied.toFixed(2),
+            s.profit.toFixed(2),
+            s.paymentType,
+            s.customer || "",
+          ]);
+        });
+        downloadCSV(rows, `sales_${todayISO()}.csv`);
+      }
+
+      /* ============================
+   Damages functions (row)
+   ============================ */
+
+      function uiRecordDamage() {
+        const qty = Math.max(
+          0,
+          parseInt(document.getElementById("damageQty").value || 0)
+        );
+        const unit = document.getElementById("damageUnit").value; // 'sachet' or 'bag'
+        if (qty <= 0) return alert("Enter damage quantity.");
+
+        const totalSachetsDamaged = unit === "bag" ? qty * sachetsPerBag : qty;
+        if (totalSachetsDamaged > state.stock.totalSachets)
+          return alert("Not enough stock to mark as damaged.");
+
+        // loss calculated at cost per bag proportionally
+        const loss =
+          (totalSachetsDamaged / sachetsPerBag) *
+          (state.prices.costPerBag || 0);
+
+        // deduct
+        state.stock.totalSachets -= totalSachetsDamaged;
+        // record
+        const entry = {
+          date: new Date().toISOString(),
+          bagsDamaged: unit === "bag" ? qty : 0,
+          sachetsDamaged: unit === "sachet" ? qty : 0,
+          loss: Number(loss),
+        };
+        state.damages.push(entry);
+        saveAll();
+        syncUI();
+        document.getElementById("damageQty").value = 1;
+        alert(`Damage recorded. Loss: ${money(loss)}`);
+      }
+
+      /* render damages */
+      function renderDamageHistory() {
+        const tbody = document.querySelector("#damageHistoryTable tbody");
+        tbody.innerHTML = "";
+        if (!state.damages || state.damages.length === 0) {
+          tbody.innerHTML =
+            '<tr><td colspan="4" class="small">No damage records</td></tr>';
+          return;
+        }
+        state.damages
+          .slice()
+          .reverse()
+          .forEach((d) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td>${new Date(d.date).toLocaleString()}</td>
+      <td>${d.bagsDamaged || 0}</td>
+      <td>${d.sachetsDamaged || 0}</td>
+      <td>${money(d.loss)}</td>`;
+            tbody.appendChild(tr);
+          });
+      }
+
+      /* Export damages */
+      function exportDamages() {
+        const rows = [["date", "bagsDamaged", "sachetsDamaged", "loss"]];
+        state.damages.forEach((d) =>
+          rows.push([
+            new Date(d.date).toLocaleString(),
+            d.bagsDamaged || 0,
+            d.sachetsDamaged || 0,
+            d.loss.toFixed(2),
+          ])
+        );
+        downloadCSV(rows, `damages_${todayISO()}.csv`);
+      }
+
+      /* ============================
+   Debtors functions (row)
+   ============================ */
+
+      function uiAddDebtor() {
+        const name = (document.getElementById("debtorName").value || "").trim();
+        const amount = parseFloat(
+          document.getElementById("debtorAmount").value || 0
+        );
+        if (!name || amount <= 0) return alert("Enter debtor name and amount.");
+
+        state.debtors.push({
+          date: new Date().toISOString(),
+          name,
+          amount: Number(amount),
+        });
+        saveAll();
+        renderDebtors();
+        document.getElementById("debtorName").value = "";
+        document.getElementById("debtorAmount").value = "";
+      }
+
+      function renderDebtors() {
+        const tbody = document.querySelector("#debtorsTable tbody");
+        tbody.innerHTML = "";
+        if (!state.debtors || state.debtors.length === 0) {
+          tbody.innerHTML =
+            '<tr><td colspan="4" class="small">No debtors</td></tr>';
+          return;
+        }
+        state.debtors
+          .slice()
+          .reverse()
+          .forEach((d, i) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td>${new Date(d.date).toLocaleString()}</td>
+      <td>${d.name}</td>
+      <td>${money(d.amount)}</td>
+      <td><button class="secondary" onclick="markDebtorPaid(${
+        state.debtors.length - 1 - i
+      })">Mark Paid</button></td>`;
+            tbody.appendChild(tr);
+          });
+      }
+
+      function markDebtorPaid(idx) {
+        if (!confirm("Mark this debt as paid?")) return;
+        state.debtors.splice(idx, 1);
+        saveAll();
+        renderDebtors();
+      }
+
+      /* Export debtors */
+      function exportDebtors() {
+        const rows = [["date", "name", "amount"]];
+        state.debtors.forEach((d) =>
+          rows.push([
+            new Date(d.date).toLocaleString(),
+            d.name,
+            d.amount.toFixed(2),
+          ])
+        );
+        downloadCSV(rows, `debtors_${todayISO()}.csv`);
+      }
+
+      /* ============================
+   Reports: filter & charts
+   ============================ */
+
+      function applyReportFilter() {
+        const fromVal = document.getElementById("reportFrom").value;
+        const toVal = document.getElementById("reportTo").value;
+        const from = fromVal ? new Date(fromVal) : null;
+        const to = toVal ? new Date(toVal) : null;
+        if (to) to.setHours(23, 59, 59, 999);
+
+        const filtered = state.sales.filter((s) => {
+          const d = new Date(s.date);
+          if (from && d < from) return false;
+          if (to && d > to) return false;
+          return true;
+        });
+        renderReportTable(filtered);
+        drawChart(filtered);
+      }
+
+      function clearReportFilter() {
+        document.getElementById("reportFrom").value = "";
+        document.getElementById("reportTo").value = "";
+        renderReportTable(state.sales);
+        drawChart();
+      }
+
+      /* render report table */
+      function renderReportTable(data) {
+        const tbody = document.querySelector("#reportTable tbody");
+        tbody.innerHTML = "";
+        if (!data || data.length === 0) {
+          tbody.innerHTML =
+            '<tr><td colspan="6" class="small">No data</td></tr>';
+          return;
+        }
+        let rev = 0,
+          cost = 0,
+          prof = 0;
+        data
+          .slice()
+          .reverse()
+          .forEach((s) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td>${new Date(s.date).toLocaleDateString()}</td>
+      <td>${s.kind}</td>
+      <td>${s.qty}</td>
+      <td>${money(s.revenue)}</td>
+      <td>${money(s.costApplied)}</td>
+      <td>${money(s.profit)}</td>`;
+            tbody.appendChild(tr);
+            rev += s.revenue;
+            cost += s.costApplied;
+            prof += s.profit;
+          });
+        document.getElementById("repRevenue")?.innerText &&
+          (document.getElementById("repRevenue").innerText = money(rev));
+        document.getElementById("repCost")?.innerText &&
+          (document.getElementById("repCost").innerText = money(cost));
+        document.getElementById("repProfit")?.innerText &&
+          (document.getElementById("repProfit").innerText = money(prof));
+      }
+
+      /* Chart drawing */
+      let salesChart = null;
+      function drawChart(filteredSales = null) {
+        const data = filteredSales || state.sales;
+        // aggregate per day
+        const grouped = {};
+        data.forEach((s) => {
+          const day = new Date(s.date).toLocaleDateString();
+          if (!grouped[day]) grouped[day] = { revenue: 0, profit: 0 };
+          grouped[day].revenue += s.revenue || 0;
+          grouped[day].profit += s.profit || 0;
+        });
+        const labels = Object.keys(grouped).sort(
+          (a, b) => new Date(a) - new Date(b)
+        );
+        const revenues = labels.map((l) => grouped[l].revenue);
+        const profits = labels.map((l) => grouped[l].profit);
+
+        const ctx = document.getElementById("salesChart").getContext("2d");
+        if (salesChart) salesChart.destroy();
+        salesChart = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "Revenue",
+                data: revenues,
+                backgroundColor: "rgba(30,136,229,0.9)",
+              },
+              {
+                label: "Profit",
+                data: profits,
+                backgroundColor: "rgba(102,187,106,0.9)",
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            scales: {
+              x: { stacked: false },
+              y: { beginAtZero: true, ticks: { callback: (v) => money(v) } },
+            },
+          },
+        });
+      }
+
+      /* Export filtered sales (CSV) */
+      function exportFilteredSales() {
+        const fromVal = document.getElementById("reportFrom").value;
+        const toVal = document.getElementById("reportTo").value;
+        const from = fromVal ? new Date(fromVal) : null;
+        const to = toVal ? new Date(toVal) : null;
+        if (to) to.setHours(23, 59, 59, 999);
+
+        const filtered = state.sales.filter((s) => {
+          const d = new Date(s.date);
+          if (from && d < from) return false;
+          if (to && d > to) return false;
+          return true;
+        });
+        const rows = [
+          [
+            "date",
+            "type",
+            "qty",
+            "revenue",
+            "costApplied",
+            "profit",
+            "paymentType",
+            "customer",
+          ],
+        ];
+        filtered.forEach((s) =>
+          rows.push([
+            new Date(s.date).toLocaleString(),
+            s.kind,
+            s.qty,
+            s.revenue.toFixed(2),
+            s.costApplied.toFixed(2),
+            s.profit.toFixed(2),
+            s.paymentType,
+            s.customer || "",
+          ])
+        );
+        downloadCSV(rows, `filtered_sales_${todayISO()}.csv`);
+      }
+
+      /* ============================
+   Settings & Helpers
+   ============================ */
+
+      function saveSettings() {
+        const cost = parseFloat(
+          document.getElementById("setCostBag").value || 0
+        );
+        const sb = parseFloat(document.getElementById("setSellBag").value || 0);
+        const ss = parseFloat(
+          document.getElementById("setSellSachet").value || 0
+        );
+        const threshold = parseInt(
+          document.getElementById("lowStockThreshold").value || 5
+        );
+        if (cost >= 0) state.prices.costPerBag = cost;
+        if (sb >= 0) state.prices.sellBag = sb;
+        if (ss >= 0) state.prices.sellSachet = ss;
+        state.settings.lowStockThreshold = threshold;
+        saveAll();
+        syncUI();
+        alert("Settings saved.");
+      }
+
+      function resetData() {
+        if (!confirm("This will erase all local data. Continue?")) return;
+        localStorage.removeItem(LC_KEYS.STOCK);
+        localStorage.removeItem(LC_KEYS.PRICES);
+        localStorage.removeItem(LC_KEYS.SALES);
+        localStorage.removeItem(LC_KEYS.DEBTS);
+        localStorage.removeItem(LC_KEYS.DAM);
+        localStorage.removeItem(LC_KEYS.SETTINGS);
+        // reset state to defaults
+        state.stock = { totalSachets: 0, supplierBagsTotal: 0, history: [] };
+        state.prices = { costPerBag: 5.0, sellBag: 12.0, sellSachet: 0.5 };
+        state.sales = [];
+        state.debtors = [];
+        state.damages = [];
+        state.settings = { lowStockThreshold: 5 };
+        saveAll();
+        syncUI();
+      }
+
+      /* ============================
+   CSV utility
+   ============================ */
+      function downloadCSV(rows, filename) {
+        const csv = rows
+          .map((r) =>
+            r.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")
+          )
+          .join("\n");
+        const blob = new Blob([csv], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      /* ============================
+   tiny helpers
+   ============================ */
+      function todayISO() {
+        return new Date().toISOString().slice(0, 10);
+      }
+
+      /* ============================
+   UI render helpers to re-use
+   ============================ */
+
+      function renderSalesHistory() {
+        /* implemented above intentionally for clarity */ renderSalesHistoryActual();
+      }
+      function renderSalesHistoryActual() {
+        const tbody = document.querySelector("#salesHistoryTable tbody");
+        tbody.innerHTML = "";
+        if (!state.sales.length) {
+          tbody.innerHTML =
+            '<tr><td colspan="7" class="small">No sales yet</td></tr>';
+          return;
+        }
+        state.sales
+          .slice()
+          .reverse()
+          .forEach((s) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td>${new Date(s.date).toLocaleString()}</td>
+      <td>${s.kind}</td>
+      <td>${s.qty}</td>
+      <td>${money(s.revenue)}</td>
+      <td>${money(s.costApplied)}</td>
+      <td>${money(s.profit)}</td>
+      <td>${s.paymentType}${s.customer ? " / " + s.customer : ""}</td>`;
+            tbody.appendChild(tr);
+          });
+      }
+
+      /* ============================
+   On-change hooks & small UI wiring
+   ============================ */
+      document
+        .getElementById("salePaymentType")
+        .addEventListener("change", function () {
+          const v = this.value;
+          document.getElementById("creditNameLabel").style.display =
+            v === "credit" ? "block" : "none";
+          document.getElementById("creditName").style.display =
+            v === "credit" ? "block" : "none";
+        });
+
+      /* hooks to render on load */
+      renderStockHistory();
+      renderSalesHistoryActual();
+      renderDamageHistory();
+      renderDebtors();
+      updateDashboard();
+
+      /* ============================
+   Export helpers for various rows already defined
+   ============================ */
+
+      /* ============================
+   End of script
+   ============================ */
+    </script>
+  </body>
+</html>
