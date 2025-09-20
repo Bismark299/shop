@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Water Stock Management — Final</title>
+    <style>
+      :root {
+        --primary: #2666b2;
+        --accent: #4a90e2;
+        --muted: #7d8aa3;
+        --bg: #f4f7fb;
+        --card: #ffffff;
+        --success: #2ecc71;
+        --danger: #e74c3c;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: Inter, "Segoe UI", Roboto, Arial;
+        background: var(--bg);
+        color: #222;
+        -webkit-font-smoothing: antialiased;
+      }
+      header {
+        background: linear-gradient(90deg, var(--primary), var(--accent));
+        color: white;
+        padding: 18px 20px;
+        text-align: center;
+        box-shadow: 0 4px 14px rgba(34, 50, 80, 0.08);
+      }
+      header h1 {
+        margin: 0;
+        font-size: 1.25rem;
+        letter-spacing: 0.2px;
+      }
+      .container {
+        max-width: 1150px;
+        margin: 20px auto;
+        padding: 0 16px;
+      }
+
+      .tabs {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin: 18px 0;
+      }
+      .tab-btn {
+        background: var(--card);
+        border: 1px solid #e6eef8;
+        padding: 10px 12px;
+        border-radius: 10px;
+        cursor: pointer;
+        color: var(--primary);
+        font-weight: 600;
+        box-shadow: 0 2px 6px rgba(34, 50, 80, 0.03);
+      }
+      .tab-btn.active {
+        background: linear-gradient(90deg, var(--accent), var(--primary));
+        color: white;
+        box-shadow: 0 6px 18px rgba(34, 50, 80, 0.08);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 16px;
+      }
+      .card {
+        background: var(--card);
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 6px 18px rgba(34, 50, 80, 0.03);
+      }
+      .col-4 {
+        grid-column: span 4;
+      }
+      .col-8 {
+        grid-column: span 8;
+      }
+      .col-6 {
+        grid-column: span 6;
+      }
+      .col-12 {
+        grid-column: span 12;
+      }
+
+      h2 {
+        margin: 0 0 10px 0;
+        color: var(--primary);
+        font-size: 1.05rem;
+      }
+      label {
+        display: block;
+        font-size: 0.9rem;
+        color: var(--muted);
+        margin: 8px 0 6px;
+      }
+      input[type="number"],
+      input[type="text"],
+      input[type="date"],
+      select {
+        width: 100%;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #e6eef8;
+        background: #fbfdff;
+      }
+      button {
+        padding: 10px 12px;
+        border-radius: 8px;
+        border: none;
+        background: var(--accent);
+        color: white;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      small {
+        color: var(--muted);
+      }
+
+      .summary-row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+      }
+      .summary {
+        background: linear-gradient(180deg, #fff, #fcfeff);
+        padding: 12px;
+        border-radius: 10px;
+        flex: 1;
+        min-width: 170px;
+        border: 1px solid #f0f6fb;
+        text-align: center;
+      }
+      .summary h3 {
+        margin: 0;
+        font-size: 1.1rem;
+        color: #333;
+      }
+      .summary p {
+        margin: 6px 0 0;
+        font-weight: 700;
+        color: var(--primary);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 12px;
+      }
+      th,
+      td {
+        padding: 10px;
+        border-bottom: 1px solid #f1f6fb;
+        text-align: left;
+        font-size: 0.95rem;
+      }
+      th {
+        background: #fbfdff;
+        color: var(--muted);
+        font-weight: 700;
+      }
+      .right {
+        text-align: right;
+      }
+      .tag-credit {
+        color: var(--danger);
+        font-weight: 700;
+      }
+      .small-btn {
+        padding: 6px 8px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        background: #eef6ff;
+        color: var(--primary);
+        font-weight: 700;
+      }
+      .small-btn.green {
+        background: var(--success);
+        color: white;
+      }
+      .small-btn.danger {
+        background: var(--danger);
+        color: white;
+      }
+
+      @media (max-width: 900px) {
+        .col-8,
+        .col-4,
+        .col-6 {
+          grid-column: span 12;
+        }
+        .summary-row {
+          flex-direction: column;
+        }
+      }
+
+      .muted-note {
+        color: var(--muted);
+        font-size: 0.9rem;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>💧 Water Stock Management — Mr. Bismark</h1>
+    </header>
+
+    <div class="container">
+      <div class="tabs">
+        <button
+          class="tab-btn active"
+          data-tab="dashboard"
+          onclick="openTab(event)"
+        >
+          Dashboard
+        </button>
+        <button class="tab-btn" data-tab="stock" onclick="openTab(event)">
+          Stock
+        </button>
+        <button class="tab-btn" data-tab="sales" onclick="openTab(event)">
+          Sales
+        </button>
+        <button class="tab-btn" data-tab="damage" onclick="openTab(event)">
+          Damages
+        </button>
+        <button class="tab-btn" data-tab="debtors" onclick="openTab(event)">
+          Debtors
+        </button>
+        <button class="tab-btn" data-tab="reports" onclick="openTab(event)">
+          Reports
+        </button>
+        <button class="tab-btn" data-tab="settings" onclick="openTab(event)">
+          Settings
+        </button>
+      </div>
+
+      <!-- DASHBOARD -->
+      <div id="dashboard" class="tab card">
+        <h2>Dashboard — Quick Overview</h2>
+        <div class="grid">
+          <div class="col-4 card">
+            <h3>Stock Left</h3>
+            <p
+              id="dashStockReadable"
+              style="font-size: 1.2rem; font-weight: 800"
+            >
+              0 Bags 0 Sachets
+            </p>
+            <small id="dashSachetsRaw">0 sachets total</small>
+          </div>
+
+          <div class="col-4 card">
+            <h3>Stock Value (sell)</h3>
+            <p id="dashValue" style="font-size: 1.2rem; font-weight: 800">
+              GHS 0.00
+            </p>
+            <small>Based on current selling prices</small>
+          </div>
+
+          <div class="col-4 card">
+            <h3>Total Cost Invested</h3>
+            <p id="dashTotalCost" style="font-size: 1.2rem; font-weight: 800">
+              GHS 0.00
+            </p>
+            <small>Sum of costs for added stock</small>
+          </div>
+
+          <div class="col-4 card" style="margin-top: 12px">
+            <h3>Damaged Loss</h3>
+            <p id="dashDamageLoss" style="font-size: 1.2rem; font-weight: 800">
+              GHS 0.00
+            </p>
+            <small>Total value lost due to damage</small>
+          </div>
+
+          <div class="col-4 card" style="margin-top: 12px">
+            <h3>Total Profit</h3>
+            <p id="dashProfit" style="font-size: 1.2rem; font-weight: 800">
+              GHS 0.00
+            </p>
+            <small>Revenue − cost applied</small>
+          </div>
+
+          <div class="col-4 card" style="margin-top: 12px">
+            <h3>Outstanding Debts</h3>
+            <p id="dashDebts" style="font-size: 1.2rem; font-weight: 800">
+              GHS 0.00
+            </p>
+            <small id="dashDebtorsCnt">0 debtors</small>
+          </div>
+
+          <div class="col-12 card" style="margin-top: 12px">
+            <h3>Recent Sales</h3>
+            <table id="dashRecent">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Items</th>
+                  <th>Revenue</th>
+                  <th>Profit</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="4" style="text-align: center; color: #7d8aa3">
+                    No sales yet
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- STOCK -->
+      <div id="stock" class="tab card" style="display: none">
+        <h2>Stock Management</h2>
+        <div class="grid">
+          <div class="col-6 card">
+            <label>Number of Bags to add</label>
+            <input
+              id="inputAddBags"
+              type="number"
+              min="1"
+              placeholder="e.g. 10"
+            />
+            <label>Cost price per bag (GHS)</label>
+            <input
+              id="inputCostPerBag"
+              type="number"
+              step="0.01"
+              placeholder="e.g. 5.00"
+            />
+            <button onclick="addBags()">➕ Add Stock</button>
+            <p class="muted-note">
+              Each bag contains <strong>30 sachets</strong>. Add bag cost so
+              profit uses correct cost base.
+            </p>
+          </div>
+
+          <div class="col-6 card">
+            <h3>Stock Summary</h3>
+            <div class="summary-row">
+              <div class="summary">
+                <h3 id="uiBagsCount">0</h3>
+                <p>Bags (full)</p>
+              </div>
+              <div class="summary">
+                <h3 id="uiSachetsCount">0</h3>
+                <p>Remaining Sachets</p>
+              </div>
+              <div class="summary">
+                <h3 id="uiStockCost">GHS 0.00</h3>
+                <p>Total stock cost</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 card">
+            <h3>Stock History</h3>
+            <table id="stockTable">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Bags Added</th>
+                  <th>Cost/Bag</th>
+                  <th>Total Cost</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="4" style="text-align: center; color: #7d8aa3">
+                    No stock additions yet
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SALES -->
+      <div id="sales" class="tab card" style="display: none">
+        <h2>Record Sale</h2>
+        <div class="grid">
+          <div class="col-4 card">
+            <label>Bags sold</label>
+            <input id="sellBags" type="number" min="0" value="0" />
+            <label>Sachets sold</label>
+            <input id="sellSachets" type="number" min="0" value="0" />
+            <label>Sale Type</label>
+            <select id="sellType">
+              <option value="cash">Cash</option>
+              <option value="credit">Credit</option>
+            </select>
+            <div id="customerWrap" style="display: none">
+              <label>Customer name (for credit)</label>
+              <input
+                id="sellCustomer"
+                type="text"
+                placeholder="Customer Name"
+              />
+            </div>
+            <button onclick="saveSale()">💾 Save Sale</button>
+            <p class="muted-note">
+              If sachets sold are 30, they are treated as sachet sales (use
+              sachet price). Bag sales use bag price.
+            </p>
+          </div>
+
+          <div class="col-8 card">
+            <h3>Sale Settings & Current Prices</h3>
+            <div class="grid">
+              <div class="col-6">
+                <label>Current cost price per bag (GHS)</label>
+                <input
+                  id="setCostPerBag"
+                  type="number"
+                  step="0.01"
+                  placeholder="Cost per bag"
+                />
+              </div>
+              <div class="col-6">
+                <label>Current selling price per bag (GHS)</label>
+                <input
+                  id="setSellBagPrice"
+                  type="number"
+                  step="0.01"
+                  placeholder="Selling price per bag"
+                />
+              </div>
+              <div class="col-6">
+                <label>Current selling price per sachet (GHS)</label>
+                <input
+                  id="setSellSachetPrice"
+                  type="number"
+                  step="0.01"
+                  placeholder="Selling price per sachet"
+                  value="0.50"
+                />
+              </div>
+              <div class="col-6">
+                <label>&nbsp;</label>
+                <button onclick="savePrices()">Save Prices</button>
+              </div>
+            </div>
+
+            <h3 style="margin-top: 14px">Recent Sales</h3>
+            <table id="salesTable">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Items</th>
+                  <th>Revenue</th>
+                  <th>Cost Applied</th>
+                  <th>Profit</th>
+                  <th>Type</th>
+                  <th>Customer</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="7" style="text-align: center; color: #7d8aa3">
+                    No sales recorded
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- DAMAGES -->
+      <div id="damage" class="tab card" style="display: none">
+        <h2>Record Damaged Goods</h2>
+        <div class="grid">
+          <div class="col-6 card">
+            <label>Bags Damaged</label>
+            <input id="damageBags" type="number" min="0" value="0" />
+            <label>Sachets Damaged</label>
+            <input id="damageSachets" type="number" min="0" value="0" />
+            <button onclick="recordDamage()">⚠️ Record Damage</button>
+            <p class="muted-note">
+              Damage value equals cost per bag × (total sachets damaged / 30).
+            </p>
+          </div>
+
+          <div class="col-6 card">
+            <h3>Damage History</h3>
+            <table id="damageTable">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Bags</th>
+                  <th>Sachets</th>
+                  <th>Loss (GHS)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="4" style="text-align: center; color: #7d8aa3">
+                    No damages recorded
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- DEBTORS -->
+      <div id="debtors" class="tab card" style="display: none">
+        <h2>Debtors / Credit Sales</h2>
+        <table id="debtorsTable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Name</th>
+              <th>Amount (GHS)</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td colspan="4" style="text-align: center; color: #7d8aa3">
+                No debtors
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- REPORTS -->
+      <div id="reports" class="tab card" style="display: none">
+        <h2>Reports & Filters</h2>
+        <div class="grid">
+          <div class="col-6 card">
+            <label>From</label>
+            <input id="reportFrom" type="date" />
+          </div>
+          <div class="col-6 card">
+            <label>To</label>
+            <input id="reportTo" type="date" />
+          </div>
+          <div class="col-12" style="margin-top: 8px">
+            <button onclick="applyReportFilter()">Apply Date Filter</button>
+            <button onclick="exportCSV()">Export Sales CSV</button>
+          </div>
+
+          <div class="col-12 card">
+            <h3>Filtered Sales</h3>
+            <table id="reportTable">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Items</th>
+                  <th>Revenue</th>
+                  <th>Cost</th>
+                  <th>Profit</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="5" style="text-align: center; color: #7d8aa3">
+                    No data
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="summary-row" style="margin-top: 12px">
+              <div class="summary">
+                <h3 id="repRevenue">GHS 0.00</h3>
+                <p>Total Revenue</p>
+              </div>
+              <div class="summary">
+                <h3 id="repCost">GHS 0.00</h3>
+                <p>Total Cost</p>
+              </div>
+              <div class="summary">
+                <h3 id="repProfit">GHS 0.00</h3>
+                <p>Total Profit</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div id="settings" class="tab card" style="display: none">
+        <h2>Settings & Storage</h2>
+        <p class="muted-note">
+          Data is saved locally in your browser (localStorage). Use export to
+          back up sales data.
+        </p>
+        <button onclick="clearAllConfirm()" style="background: #e74c3c">
+          Clear All Data (Reset)
+        </button>
+      </div>
+    </div>
+
+    <script>
+      /* -------------------------
+       Formatter (Ghana Cedi)
+       ------------------------- */
+      const formatter = new Intl.NumberFormat("en-GH", {
+        style: "currency",
+        currency: "GHS",
+      });
+      function formatMoney(v) {
+        return formatter.format(Number(v || 0));
+      }
+
+      /* -------------------------
+       Storage Keys & initial data
+       ------------------------- */
+      const KEY_STOCK = "wb_stock_v2";
+      const KEY_PRICES = "wb_prices_v2";
+      const KEY_SALES = "wb_sales_v2";
+      const KEY_DEBT = "wb_debt_v2";
+      const KEY_DAM = "wb_damage_v2";
+
+      const sachetsPerBag = 30;
+
+      let stock = { totalSachets: 0, history: [] }; // history entries {date, bagsAdded, costPerBag, totalCost}
+      let prices = { costPerBag: 0.0, sellBag: 0.0, sellSachet: 0.5 };
+      let sales = []; // {date, bagsSold, sachetsSold, revenue, costApplied, profit, type, customer, priceSnapshot}
+      let debtors = []; // {date, name, amount, saleIndex}
+      let damages = []; // {date, bagsDamaged, sachetsDamaged, loss}
+
+      /* -------------------------
+       Persistence
+       ------------------------- */
+      function saveAll() {
+        localStorage.setItem(KEY_STOCK, JSON.stringify(stock));
+        localStorage.setItem(KEY_PRICES, JSON.stringify(prices));
+        localStorage.setItem(KEY_SALES, JSON.stringify(sales));
+        localStorage.setItem(KEY_DEBT, JSON.stringify(debtors));
+        localStorage.setItem(KEY_DAM, JSON.stringify(damages));
+      }
+
+      function loadAll() {
+        const s = localStorage.getItem(KEY_STOCK);
+        const p = localStorage.getItem(KEY_PRICES);
+        const sa = localStorage.getItem(KEY_SALES);
+        const d = localStorage.getItem(KEY_DEBT);
+        const dam = localStorage.getItem(KEY_DAM);
+        if (s) stock = JSON.parse(s);
+        if (p) prices = JSON.parse(p);
+        if (sa) sales = JSON.parse(sa);
+        if (d) debtors = JSON.parse(d);
+        if (dam) damages = JSON.parse(dam);
+        // ensure defaults
+        if (!prices.sellSachet) prices.sellSachet = 0.5;
+        syncUIFromData();
+      }
+
+      /* -------------------------
+       UI Sync
+       ------------------------- */
+      function syncUIFromData() {
+        // Stock readable: convert totalSachets -> bags + sachets remainder
+        const totalSachets = stock.totalSachets || 0;
+        const bags = Math.floor(totalSachets / sachetsPerBag);
+        const sachets = totalSachets % sachetsPerBag;
+        document.getElementById(
+          "dashStockReadable"
+        ).innerText = `${bags} Bags ${sachets} Sachets`;
+        document.getElementById(
+          "dashSachetsRaw"
+        ).innerText = `${totalSachets} sachets total`;
+
+        document.getElementById("uiBagsCount").innerText = bags;
+        document.getElementById("uiSachetsCount").innerText = sachets;
+
+        // total stock cost = sum stock.history totalCost
+        const totalStockCost = (stock.history || []).reduce(
+          (s, e) => s + (e.totalCost || 0),
+          0
+        );
+        document.getElementById("uiStockCost").innerText =
+          formatMoney(totalStockCost);
+        document.getElementById("dashTotalCost").innerText =
+          formatMoney(totalStockCost);
+
+        // Stock value at sell price (based on sachet sell price)
+        const stockSellValue =
+          (stock.totalSachets || 0) * (prices.sellSachet || 0);
+        document.getElementById("dashValue").innerText =
+          formatMoney(stockSellValue);
+
+        // recent stock history table
+        const stBody = document.querySelector("#stockTable tbody");
+        if (!stock.history || stock.history.length === 0) {
+          stBody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#7d8aa3">No stock additions yet</td></tr>`;
+        } else {
+          stBody.innerHTML = "";
+          stock.history
+            .slice()
+            .reverse()
+            .forEach((h) => {
+              const tr = document.createElement("tr");
+              tr.innerHTML = `<td>${new Date(h.date).toLocaleString()}</td>
+            <td>${h.bagsAdded}</td>
+            <td>${formatMoney(h.costPerBag)}</td>
+            <td>${formatMoney(h.totalCost)}</td>`;
+              stBody.appendChild(tr);
+            });
+        }
+
+        // prices inputs
+        document.getElementById("setCostPerBag").value =
+          prices.costPerBag || "";
+        document.getElementById("setSellBagPrice").value = prices.sellBag || "";
+        document.getElementById("setSellSachetPrice").value =
+          prices.sellSachet || 0.5;
+
+        // sales table
+        renderSalesTable(sales);
+
+        // damages table
+        const damBody = document.querySelector("#damageTable tbody");
+        if (!damages || damages.length === 0) {
+          damBody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#7d8aa3">No damages recorded</td></tr>`;
+        } else {
+          damBody.innerHTML = "";
+          damages
+            .slice()
+            .reverse()
+            .forEach((d) => {
+              const tr = document.createElement("tr");
+              tr.innerHTML = `<td>${new Date(d.date).toLocaleString()}</td>
+            <td>${d.bagsDamaged}</td>
+            <td>${d.sachetsDamaged}</td>
+            <td>${formatMoney(d.loss)}</td>`;
+              damBody.appendChild(tr);
+            });
+        }
+
+        // damage loss total
+        const totalDamageLoss = (damages || []).reduce(
+          (s, d) => s + (d.loss || 0),
+          0
+        );
+        document.getElementById("dashDamageLoss").innerText =
+          formatMoney(totalDamageLoss);
+
+        // debtors table
+        renderDebtors();
+
+        // dashboard recent sales
+        const recent = sales.slice().reverse().slice(0, 6);
+        const dashRecent = document.querySelector("#dashRecent tbody");
+        if (recent.length === 0) {
+          dashRecent.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#7d8aa3">No sales yet</td></tr>`;
+        } else {
+          dashRecent.innerHTML = "";
+          recent.forEach((s) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td>${new Date(s.date).toLocaleString()}</td>
+            <td>${s.bagsSold}b + ${s.sachetsSold}s</td>
+            <td>${formatMoney(s.revenue)}</td>
+            <td>${formatMoney(s.profit)}</td>`;
+            dashRecent.appendChild(tr);
+          });
+        }
+
+        // dashboard debts totals
+        const totalDebt = (debtors || []).reduce(
+          (s, d) => s + (d.amount || 0),
+          0
+        );
+        document.getElementById("dashDebts").innerText = formatMoney(totalDebt);
+        document.getElementById(
+          "dashDebtorsCnt"
+        ).innerText = `${debtors.length} debtors`;
+
+        // dashboard profit total (all-time)
+        const totalProfit = (sales || []).reduce(
+          (s, x) => s + (x.profit || 0),
+          0
+        );
+        document.getElementById("dashProfit").innerText =
+          formatMoney(totalProfit);
+      }
+
+      function renderSalesTable(data) {
+        const tbody = document.querySelector("#salesTable tbody");
+        if (!data || data.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#7d8aa3">No sales recorded</td></tr>`;
+          return;
+        }
+        tbody.innerHTML = "";
+        data
+          .slice()
+          .reverse()
+          .forEach((s) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td>${new Date(s.date).toLocaleString()}</td>
+          <td>${s.bagsSold} bag(s) + ${s.sachetsSold} sachet(s)</td>
+          <td>${formatMoney(s.revenue)}</td>
+          <td>${formatMoney(s.costApplied)}</td>
+          <td>${formatMoney(s.profit)}</td>
+          <td class="${s.type === "credit" ? "tag-credit" : ""}">${s.type}</td>
+          <td>${s.customer || "-"}</td>`;
+            tbody.appendChild(tr);
+          });
+      }
+
+      function renderDebtors() {
+        const tbody = document.querySelector("#debtorsTable tbody");
+        if (!debtors || debtors.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#7d8aa3">No debtors</td></tr>`;
+          return;
+        }
+        tbody.innerHTML = "";
+        debtors
+          .slice()
+          .reverse()
+          .forEach((d, idx) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td>${new Date(d.date).toLocaleString()}</td>
+          <td>${d.name}</td>
+          <td>${formatMoney(d.amount)}</td>
+          <td><button class="small-btn green" onclick="payDebt(${
+            debtors.length - 1 - idx
+          })">Mark Paid</button></td>`;
+            tbody.appendChild(tr);
+          });
+      }
+
+      /* -------------------------
+       Actions
+       ------------------------- */
+
+      // Add bags to stock
+      function addBags() {
+        const b = parseInt(document.getElementById("inputAddBags").value);
+        const c = parseFloat(document.getElementById("inputCostPerBag").value);
+        if (isNaN(b) || b <= 0 || isNaN(c) || c <= 0) {
+          alert("Enter valid bags and a valid cost per bag.");
+          return;
+        }
+        const totalCost = b * c;
+        const entry = {
+          date: new Date().toISOString(),
+          bagsAdded: b,
+          costPerBag: c,
+          totalCost,
+        };
+        stock.history.push(entry);
+        stock.totalSachets = (stock.totalSachets || 0) + b * sachetsPerBag;
+        // update current cost per bag
+        prices.costPerBag = c;
+        document.getElementById("inputAddBags").value = "";
+        document.getElementById("inputCostPerBag").value = "";
+        saveAll();
+        syncUIFromData();
+        alert("Stock added.");
+      }
+
+      // Save prices
+      function savePrices() {
+        const cp = parseFloat(document.getElementById("setCostPerBag").value);
+        const sb = parseFloat(document.getElementById("setSellBagPrice").value);
+        const ss = parseFloat(
+          document.getElementById("setSellSachetPrice").value
+        );
+        if (isNaN(cp) || cp <= 0) {
+          alert("Enter valid cost per bag.");
+          return;
+        }
+        if (isNaN(sb) || sb < 0) {
+          alert("Enter valid selling price per bag (>= 0).");
+          return;
+        }
+        if (isNaN(ss) || ss <= 0) {
+          alert("Enter valid selling price per sachet.");
+          return;
+        }
+        prices.costPerBag = cp;
+        prices.sellBag = sb;
+        prices.sellSachet = ss;
+        saveAll();
+        syncUIFromData();
+        alert("Prices saved.");
+      }
+
+      // Save sale
+      function saveSale() {
+        const bagsSold =
+          parseInt(document.getElementById("sellBags").value) || 0;
+        const sachetsSold =
+          parseInt(document.getElementById("sellSachets").value) || 0;
+        const type = document.getElementById("sellType").value;
+        const customer = document.getElementById("sellCustomer").value.trim();
+
+        if (bagsSold <= 0 && sachetsSold <= 0) {
+          alert("Enter bags sold or sachets sold (at least one).");
+          return;
+        }
+        if (type === "credit" && !customer) {
+          alert("Provide customer name for credit sale.");
+          return;
+        }
+
+        const totalSachetsNeeded = bagsSold * sachetsPerBag + sachetsSold;
+        if (totalSachetsNeeded > (stock.totalSachets || 0)) {
+          alert("Not enough stock for this sale.");
+          return;
+        }
+
+        // determine revenue:
+        const sellBagPrice = Number(prices.sellBag) || 0;
+        const sellSachetPrice = Number(prices.sellSachet) || 0.5;
+        const revenue = bagsSold * sellBagPrice + sachetsSold * sellSachetPrice;
+
+        // cost applied: costPerBag * (totalSachetsNeeded / 30)
+        const costPerBag = Number(prices.costPerBag) || 0;
+        const bagsUsedFraction = totalSachetsNeeded / sachetsPerBag;
+        const costApplied = bagsUsedFraction * costPerBag;
+
+        const profit = revenue - costApplied;
+
+        // create sale entry
+        const sale = {
+          date: new Date().toISOString(),
+          bagsSold,
+          sachetsSold,
+          revenue: Number(revenue),
+          costApplied: Number(costApplied),
+          profit: Number(profit),
+          type,
+          customer: customer || null,
+          priceSnapshot: { costPerBag, sellBagPrice, sellSachetPrice },
+        };
+
+        // deduct stock
+        stock.totalSachets -= totalSachetsNeeded;
+        if (stock.totalSachets < 0) stock.totalSachets = 0;
+
+        // push sale and maybe debtor
+        sales.push(sale);
+        if (type === "credit") {
+          debtors.push({
+            date: new Date().toISOString(),
+            name: customer,
+            amount: Number(revenue),
+            saleIndex: sales.length - 1,
+          });
+        }
+
+        // clear
+        document.getElementById("sellBags").value = 0;
+        document.getElementById("sellSachets").value = 0;
+        document.getElementById("sellCustomer").value = "";
+        document.getElementById("sellType").value = "cash";
+        document.getElementById("customerWrap").style.display = "none";
+
+        saveAll();
+        syncUIFromData();
+        alert("Sale recorded.");
+      }
+
+      // Record damaged goods
+      function recordDamage() {
+        const bagsDamaged =
+          parseInt(document.getElementById("damageBags").value) || 0;
+        const sachetsDamaged =
+          parseInt(document.getElementById("damageSachets").value) || 0;
+        if (bagsDamaged <= 0 && sachetsDamaged <= 0) {
+          alert("Enter number of damaged bags or sachets.");
+          return;
+        }
+        const totalSachetsDamaged =
+          bagsDamaged * sachetsPerBag + sachetsDamaged;
+        if (totalSachetsDamaged > (stock.totalSachets || 0)) {
+          alert("Not enough stock to mark as damaged.");
+          return;
+        }
+
+        const costPerBag = Number(prices.costPerBag) || 0;
+        const loss = (totalSachetsDamaged / sachetsPerBag) * costPerBag;
+
+        // deduct stock
+        stock.totalSachets -= totalSachetsDamaged;
+        if (stock.totalSachets < 0) stock.totalSachets = 0;
+
+        const entry = {
+          date: new Date().toISOString(),
+          bagsDamaged,
+          sachetsDamaged,
+          loss: Number(loss),
+        };
+        damages.push(entry);
+
+        // clear fields
+        document.getElementById("damageBags").value = 0;
+        document.getElementById("damageSachets").value = 0;
+
+        saveAll();
+        syncUIFromData();
+        alert("Damage recorded. Loss: " + formatMoney(loss));
+      }
+
+      // pay debt
+      function payDebt(idx) {
+        if (!confirm("Mark this debt as paid?")) return;
+        debtors.splice(idx, 1);
+        saveAll();
+        syncUIFromData();
+      }
+
+      /* -------------------------
+       Reports & Export
+       ------------------------- */
+      function applyReportFilter() {
+        const fromVal = document.getElementById("reportFrom").value;
+        const toVal = document.getElementById("reportTo").value;
+        let from = fromVal ? new Date(fromVal) : null;
+        let to = toVal ? new Date(toVal) : null;
+        if (to) to.setHours(23, 59, 59, 999);
+
+        const filtered = sales.filter((s) => {
+          const d = new Date(s.date);
+          if (from && d < from) return false;
+          if (to && d > to) return false;
+          return true;
+        });
+        renderReport(filtered);
+      }
+
+      function renderReport(data) {
+        const tbody = document.querySelector("#reportTable tbody");
+        if (!data || data.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#7d8aa3">No data</td></tr>`;
+          document.getElementById("repRevenue").innerText = formatMoney(0);
+          document.getElementById("repCost").innerText = formatMoney(0);
+          document.getElementById("repProfit").innerText = formatMoney(0);
+          return;
+        }
+        tbody.innerHTML = "";
+        let r = 0,
+          c = 0,
+          p = 0;
+        data.forEach((s) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td>${new Date(s.date).toLocaleString()}</td>
+          <td>${s.bagsSold}b + ${s.sachetsSold}s</td>
+          <td>${formatMoney(s.revenue)}</td>
+          <td>${formatMoney(s.costApplied)}</td>
+          <td>${formatMoney(s.profit)}</td>`;
+          tbody.appendChild(tr);
+          r += s.revenue;
+          c += s.costApplied;
+          p += s.profit;
+        });
+        document.getElementById("repRevenue").innerText = formatMoney(r);
+        document.getElementById("repCost").innerText = formatMoney(c);
+        document.getElementById("repProfit").innerText = formatMoney(p);
+      }
+
+      function exportCSV() {
+        if (!sales || sales.length === 0) {
+          alert("No sales to export.");
+          return;
+        }
+        let csv =
+          "date,bags_sold,sachets_sold,revenue,cost,profit,type,customer\n";
+        sales.forEach((s) => {
+          csv += `"${new Date(s.date).toLocaleString()}",${s.bagsSold},${
+            s.sachetsSold
+          },${s.revenue.toFixed(2)},${s.costApplied.toFixed(
+            2
+          )},${s.profit.toFixed(2)},${s.type},${s.customer || ""}\n`;
+        });
+        const blob = new Blob([csv], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `sales_export_${new Date()
+          .toISOString()
+          .slice(0, 10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      // Clear all
+      function clearAllConfirm() {
+        if (
+          !confirm(
+            "This will erase ALL data (stock, prices, sales, debtors, damages). Continue?"
+          )
+        )
+          return;
+        localStorage.removeItem(KEY_STOCK);
+        localStorage.removeItem(KEY_PRICES);
+        localStorage.removeItem(KEY_SALES);
+        localStorage.removeItem(KEY_DEBT);
+        localStorage.removeItem(KEY_DAM);
+        stock = { totalSachets: 0, history: [] };
+        prices = { costPerBag: 0, sellBag: 0, sellSachet: 0.5 };
+        sales = [];
+        debtors = [];
+        damages = [];
+        syncUIFromData();
+        alert("All data cleared.");
+      }
+
+      /* -------------------------
+       Tabs & UI behavior
+       ------------------------- */
+      function openTab(ev) {
+        const btns = document.querySelectorAll(".tab-btn");
+        btns.forEach((b) => b.classList.remove("active"));
+        ev.currentTarget.classList.add("active");
+        const tab = ev.currentTarget.dataset.tab;
+        document
+          .querySelectorAll(".tab")
+          .forEach((t) => (t.style.display = "none"));
+        const el = document.getElementById(tab);
+        if (el) el.style.display = "block";
+        syncUIFromData();
+      }
+      document
+        .getElementById("sellType")
+        .addEventListener("change", function () {
+          document.getElementById("customerWrap").style.display =
+            this.value === "credit" ? "block" : "none";
+        });
+
+      // initial load
+      loadAll();
+      // ensure defaults
+      if (!prices.sellSachet) prices.sellSachet = 0.5;
+      if (!prices.costPerBag) prices.costPerBag = prices.costPerBag || 0;
+      saveAll();
+      syncUIFromData();
+    </script>
+  </body>
+</html>
