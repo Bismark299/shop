@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Profit Calculator — Mr. Bismark</title>
+    <style>
+      :root {
+        --card: #fff;
+        --bg: #f4f6f8;
+        --accent: #0b74ff;
+      }
+      body {
+        font-family: Arial, sans-serif;
+        background: var(--bg);
+        margin: 20px;
+        color: #111;
+      }
+      .wrap {
+        max-width: 980px;
+        margin: 0 auto;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 14px;
+      }
+      h1 {
+        font-size: 20px;
+        margin: 0;
+      }
+      .card {
+        background: var(--card);
+        padding: 18px;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(20, 20, 30, 0.06);
+        margin-bottom: 14px;
+      }
+      label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      textarea {
+        width: 100%;
+        min-height: 140px;
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid #d5dbe6;
+        resize: vertical;
+        font-family: monospace;
+      }
+      .row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 8px;
+      }
+      button {
+        padding: 8px 12px;
+        border-radius: 8px;
+        border: 0;
+        background: var(--accent);
+        color: #fff;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      button.alt {
+        background: #6c757d;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 12px;
+      }
+      th,
+      td {
+        border: 1px solid #e6ecf2;
+        padding: 8px;
+        text-align: center;
+        font-size: 14px;
+      }
+      th {
+        background: #f0f4f8;
+      }
+      input[type="number"] {
+        width: 100px;
+        padding: 6px;
+        border-radius: 6px;
+        border: 1px solid #d5dbe6;
+      }
+      .flex-between {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+      .small {
+        font-size: 13px;
+        color: #444;
+      }
+      .totals {
+        font-weight: 700;
+        font-size: 16px;
+        margin-top: 8px;
+      }
+      @media (max-width: 700px) {
+        .row {
+          flex-direction: column;
+        }
+        input[type="number"] {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <h1>Profit Calculator — Mr. Bismark</h1>
+        <div class="small">
+          Edit Base Cost and optionally Selling Prices, then paste transactions
+          from Excel
+        </div>
+      </header>
+
+      <!-- Base Cost & Selling Price Table -->
+      <section class="card">
+        <div class="flex-between">
+          <div>
+            <label>Package Base Costs & Selling Prices</label>
+            <div class="small">
+              Base Cost editable. Selling Price editable only if toggle is ON.
+            </div>
+          </div>
+          <div>
+            <button onclick="resetDefaultCosts()" class="alt">
+              Reset Defaults
+            </button>
+          </div>
+        </div>
+        <div style="overflow: auto; margin-top: 10px">
+          <table id="costTable" style="min-width: 600px">
+            <thead>
+              <tr>
+                <th>Package</th>
+                <th>Base Cost Price (₵)</th>
+                <th>Selling Price (₵)</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="row" style="margin-top: 10px; align-items: center">
+          <input
+            type="checkbox"
+            id="manualSelling"
+            onchange="toggleManualSelling()"
+          />
+          <label for="manualSelling" class="small"
+            >Enable Manual Selling Prices</label
+          >
+        </div>
+      </section>
+
+      <!-- Paste Area -->
+      <section class="card">
+        <label
+          >Paste transactions here (Package + Selling Price or just Package if
+          Manual Selling ON)</label
+        >
+        <textarea
+          id="pasteArea"
+          placeholder="Example (copy from Excel):
+1gb[TAB]5
+2gb[TAB]9
+1gb[TAB]4.5
+2gb[TAB]9.5
+OR if Manual Selling ON, just paste:
+1
+2
+5"
+        ></textarea>
+        <div class="row" style="margin-top: 10px">
+          <button onclick="processPasted()">Process Pasted Data</button>
+          <button class="alt" onclick="clearAll()">Clear All</button>
+          <button class="alt" onclick="downloadCSV()">Download CSV</button>
+          <div style="margin-left: auto" class="small">
+            Rows: <span id="rowsCount">0</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Results Table -->
+      <section class="card">
+        <label>Transactions</label>
+        <div style="overflow: auto">
+          <table id="resultTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Package</th>
+                <th>Base Cost (₵)</th>
+                <th>Selling Price (₵)</th>
+                <th>Profit (₵)</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="totals" id="summary">
+          Total Cost: ₵0.00 | Total Profit: ₵0.00
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const defaultCosts = {
+        "1gb": 4,
+        "2gb": 8,
+        "3gb": 12,
+        "4gb": 16,
+        "5gb": 20,
+        "6gb": 24,
+        "8gb": 32,
+        "10gb": 40,
+        "15gb": 60,
+        "20gb": 80,
+        "25gb": 100,
+        "30gb": 120,
+        "40gb": 160,
+        "50gb": 200,
+      };
+      let costs = { ...defaultCosts };
+      let sellingPrices = { ...defaultCosts };
+      let results = [];
+      let manualSellingEnabled = false;
+
+      const costTableBody = document.querySelector("#costTable tbody");
+
+      function renderCostTable() {
+        costTableBody.innerHTML = "";
+        Object.keys(costs)
+          .sort((a, b) => parseInt(a) - parseInt(b))
+          .forEach((pkg) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td style="text-transform:uppercase">${pkg}</td>
+      <td><input type="number" value="${
+        costs[pkg]
+      }" step="0.01" min="0" data-pack="${pkg}" data-type="cost" style="width:110px"/></td>
+      <td><input type="number" value="${
+        sellingPrices[pkg]
+      }" step="0.01" min="0" data-pack="${pkg}" data-type="selling" style="width:110px" ${
+              manualSellingEnabled ? "" : "readonly"
+            }/></td>`;
+            costTableBody.appendChild(tr);
+          });
+
+        costTableBody.querySelectorAll("input[data-pack]").forEach((inp) => {
+          inp.addEventListener("change", (e) => {
+            const pkg = e.target.dataset.pack;
+            const type = e.target.dataset.type;
+            const val = parseFloat(e.target.value);
+            if (isNaN(val) || val < 0) {
+              alert("Enter valid number");
+              e.target.value =
+                type === "cost" ? costs[pkg] : sellingPrices[pkg];
+              return;
+            }
+            if (type === "cost") costs[pkg] = val;
+            else sellingPrices[pkg] = val;
+            if (results.length) reprocessResults();
+          });
+        });
+      }
+
+      function toggleManualSelling() {
+        manualSellingEnabled = document.getElementById("manualSelling").checked;
+        renderCostTable();
+      }
+
+      function resetDefaultCosts() {
+        if (!confirm("Reset to default values?")) return;
+        costs = { ...defaultCosts };
+        sellingPrices = { ...defaultCosts };
+        renderCostTable();
+        if (results.length) reprocessResults();
+      }
+
+      // Parse transactions
+      function normalizePackageToken(tok) {
+        if (!tok) return "";
+        tok = String(tok)
+          .trim()
+          .toLowerCase()
+          .replace(/\s+/g, "")
+          .replace(/,/g, "");
+        if (/^\d+$/.test(tok)) tok += "gb";
+        if (/^\d+g$/.test(tok)) tok += "b";
+        tok = tok.replace(/[^0-9a-z]/g, "");
+        return tok;
+      }
+
+      function parsePastedText(text) {
+        const lines = text
+          .split(/\r?\n/)
+          .map((l) => l.trim())
+          .filter((l) => l);
+        const parsed = [];
+        lines.forEach((l) => {
+          let parts = l.split(/\t/);
+          if (parts.length < 2 && !manualSellingEnabled)
+            parts = l.split(/,|;| +/).filter(Boolean);
+          if (parts.length < 1) return;
+          const pkg = normalizePackageToken(parts[0]);
+          let selling = null;
+          if (!manualSellingEnabled) {
+            selling = parseFloat(
+              String(parts[1] ?? "").replace(/[^0-9.\-]/g, "")
+            );
+            if (isNaN(selling)) selling = null;
+          } else {
+            selling = sellingPrices[pkg] ?? null;
+          }
+          parsed.push({ pkg, selling });
+        });
+        return parsed;
+      }
+
+      function processPasted() {
+        const text = document.getElementById("pasteArea").value;
+        if (!text.trim()) return alert("Paste your transactions first.");
+        const parsed = parsePastedText(text);
+        if (!parsed.length) return alert("No valid rows found.");
+        results = [];
+        parsed.forEach((p, i) => {
+          const cost = costs[p.pkg] ?? null;
+          const sell = manualSellingEnabled
+            ? sellingPrices[p.pkg] ?? null
+            : p.selling;
+          const profit = cost !== null && sell !== null ? sell - cost : null;
+          results.push({
+            idx: i + 1,
+            package: p.pkg,
+            cost: cost,
+            selling: sell,
+            profit: profit,
+          });
+        });
+        renderResults();
+      }
+
+      function reprocessResults() {
+        results = results.map((r) => {
+          const cost = costs[r.package] ?? r.cost;
+          const sell = manualSellingEnabled
+            ? sellingPrices[r.package] ?? r.selling
+            : r.selling;
+          const profit = cost !== null && sell !== null ? sell - cost : null;
+          return { ...r, cost, selling: sell, profit: profit };
+        });
+        renderResults();
+      }
+
+      function renderResults() {
+        const tbody = document.querySelector("#resultTable tbody");
+        tbody.innerHTML = "";
+        let totalCost = 0,
+          totalProfit = 0,
+          validCount = 0;
+        results.forEach((r, i) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td>${r.idx}</td>
+      <td style="text-transform:uppercase">${r.package}</td>
+      <td><input type="number" value="${
+        r.cost
+      }" step="0.01" min="0" data-idx="${i}" data-type="cost" style="width:90px"/></td>
+      <td><input type="number" value="${
+        r.selling
+      }" step="0.01" min="0" data-idx="${i}" data-type="selling" style="width:90px" ${
+            manualSellingEnabled ? "" : "readonly"
+          }/></td>
+      <td>${r.profit !== null ? r.profit.toFixed(2) : "N/A"}</td>`;
+          tbody.appendChild(tr);
+
+          tr.querySelectorAll("input").forEach((inp) => {
+            inp.addEventListener("change", (e) => {
+              const idx = parseInt(e.target.dataset.idx);
+              const type = e.target.dataset.type;
+              const val = parseFloat(e.target.value);
+              if (isNaN(val) || val < 0) {
+                alert("Enter valid number");
+                renderResults();
+                return;
+              }
+              if (type === "cost") {
+                results[idx].cost = val;
+                costs[results[idx].package] = val;
+              } else {
+                results[idx].selling = val;
+                sellingPrices[results[idx].package] = val;
+              }
+              results[idx].profit =
+                results[idx].cost !== null && results[idx].selling !== null
+                  ? results[idx].selling - results[idx].cost
+                  : null;
+              renderResults();
+            });
+          });
+
+          if (r.profit !== null) {
+            totalProfit += r.profit;
+            totalCost += r.cost;
+            validCount++;
+          }
+        });
+        document.getElementById(
+          "summary"
+        ).innerText = `Total Cost: ₵${totalCost.toFixed(
+          2
+        )} | Total Profit: ₵${totalProfit.toFixed(
+          2
+        )} (from ${validCount} valid rows)`;
+        document.getElementById("rowsCount").innerText = results.length;
+      }
+
+      // CSV download
+      function downloadCSV() {
+        if (!results.length) return alert("No data to download.");
+        let csv = "Package,Base Cost Price,Selling Price,Profit\n";
+        results.forEach((r) => {
+          csv += `${r.package || ""},${r.cost === null ? "" : r.cost},${
+            r.selling === null ? "" : r.selling
+          },${r.profit === null ? "" : r.profit.toFixed(2)}\n`;
+        });
+        const blob = new Blob([csv], { type: "text/csv" }),
+          url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "processed_transactions.csv";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      }
+
+      // Clear all
+      function clearAll() {
+        if (!confirm("Clear pasted data?")) return;
+        document.getElementById("pasteArea").value = "";
+        results = [];
+        renderResults();
+        document.getElementById("rowsCount").innerText = "0";
+      }
+
+      renderCostTable();
+    </script>
+  </body>
+</html>
